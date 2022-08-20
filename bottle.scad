@@ -1,3 +1,4 @@
+use <lib/threads/threads.scad>;
 $fn = 50;
 cell_width = 42;
 
@@ -11,11 +12,11 @@ cell_bottom_corner_radius = 2;
 
 neck_diameter = 36;
 neck_thread_outer_diameter = 38;
-neck_thread_height = (neck_thread_outer_diameter - neck_diameter)/2;
+neck_thread_tooth_height = (neck_thread_outer_diameter - neck_diameter)/2;
 neck_height = 8;
 neck_offset = 8;
 neck_threads = 3;
-neck_threads_step = 9;
+neck_threads_pitch = 9;
 
 thread_cut = 2;
 
@@ -28,24 +29,24 @@ module rbox(width, depth, height, r) {
 }
 
 
+
 translate([0, 0, bottle_body_height + neck_offset]) {
     intersection() {
-        for(i=[1:neck_threads]) {
+        for(i=[1:neck_threads])
             rotate(360/neck_threads * (i-1), [0, 0, 1])
-                linear_extrude(height=neck_height, convexity=200, twist=360/neck_threads_step*neck_height, $fn=200)
-                    translate([neck_diameter/2, 0, 0])
-                        //rotate(90, [0, 1, 0])
-                        scale([1, 10, 1])
-                            circle(d=neck_thread_height/cos(30), $fn=3);
-        }
-        translate([0,0,thread_cut/2])
+                ScrewThread(
+                    outer_diam=neck_thread_outer_diameter,
+                    height=neck_height,
+                    pitch=neck_threads_pitch,
+                    tooth_angle=30, tolerance=0.4, tip_height=0, tooth_height=neck_thread_tooth_height, tip_min_fract=0);
+        translate([0,0,0])
             minkowski() {
                 cylinder(h=thread_cut, d1=thread_cut, d2=0.01);
-                cylinder(h=thread_cut, d=neck_thread_outer_diameter-thread_cut*2);
+                cylinder(h=neck_height-thread_cut*2, d=neck_thread_outer_diameter-thread_cut*2+0.8);
                 cylinder(h=thread_cut, d1=0.01, d2=thread_cut);
             }
     }
-    cylinder(d=neck_diameter, h=neck_height);
+    //cylinder(d=neck_diameter, h=neck_height);
 }
 
     
@@ -61,12 +62,3 @@ hull() {
 }    
 translate([0, 0, -cell_bottom_height-cell_bottom_offset])
     rbox(cell_bottom_width, cell_bottom_width, cell_bottom_height, cell_bottom_corner_radius);
-    
-    
-*minkowski() {
-    cylinder(r=corner_radius, h=0.01);
-    translate([-cell_width/2+corner_radius, -cell_width/2+corner_radius, 0])
-        cube([cell_width-corner_radius*2, cell_width-corner_radius*2, bottle_body_height]);
-}
-
-*rbox(cell_width, cell_width, bottle_body_height, corner_radius);
